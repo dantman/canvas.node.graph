@@ -1,0 +1,17 @@
+canvas.node.graph is a JavaScript language port of the python NodeBox Graph library by Tom De Smedt.
+
+The NodeBox Graph library includes algorithms from the python NetworkX library for
+betweenness centrality and eigenvector centrality, Connelly Barnes' implementation of
+Dijksta shortest paths and the spring layout for JavaScript by Aslak Hellesoy 
+and Dave Hoover. So likewise this JavaScript port does as well (cept the
+implementations are ports of the originals like the library is).
+
+Generally canvas.node works the same as NodeBox Graph, and uses an almost identical
+api to make use of it. Parts of the code structure of course are different as
+JavaScript has a different structure than python and different practices.
+
+canvas.node is dual-licensed under the MIT and GPL version 2 or later licenses
+to promote flexible re-use and openness. We're on github so feel free to use
+github's fork feature to let you add features to the code and submit them back
+to the project using pull requests.
+

@@ -1,0 +1,12 @@
+- Finish porting proximity (remaining python code to port is located inline in proximity.js)
+- Port cluster
+- Write methods for the oval and functionality not builtin to canvas.
+- Port edges drawing (deferred till this library can render something, edge code uses path classes that don't exist in JS' Canvas)
+- Port gradient and shadow code
+- Write event handling code. (We don't want a direct port of event.py, we'll implement events using a event system that looks like the event system already present in the dom)
+- Port remaining examples
+- Track down @todo notes that need to be done. We'll also need to port the user-properties code used in the python version.
+- Cleanup code style:
+  - Setup head and footer code that enclose code in an isolated block and setup a Makefile to cat the js files together
+  - Reduce code neecessary for using util methods and assume they will be located inside an isolated function block
+  - Rename CanvasNode and other things to have proper names

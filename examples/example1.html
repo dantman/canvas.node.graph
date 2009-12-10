@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Canvas Node JavaScript Example 1</title>
+	
+	<script type="text/javascript" src="../src/util.js"></script>
+	<script type="text/javascript" src="../src/core.js"></script>
+	<script type="text/javascript" src="../src/proximity.js"></script>
+	<script type="text/javascript" src="../src/cluster.js"></script>
+	<script type="text/javascript" src="../src/layout.js"></script>
+	<script type="text/javascript" src="../src/style.js"></script>
+	<script type="text/javascript">
+	function startExample() {
+		var canvas = document.getElementById('graph');
+		var g = new CanvasGraph;
+		g.canvas = canvas;
+		g.addEdge("roof"       , "house");
+		g.addEdge("garden"     , "house");
+		g.addEdge("room"       , "house");
+		g.addEdge("kitchen"    , "room");
+		g.addEdge("bedroom"    , "room");
+		g.addEdge("bathroom"   , "room");
+		g.addEdge("living room", "room");
+		g.addEdge("sofa"       , "living room");
+		g.addEdge("table"      , "living room");
+	
+		g.solve();
+		g.styles.apply();
+		g.draw({ directed: true, traffic: 1 });
+	}
+	</script>
+</head>
+<body>
+	<canvas id=graph width=500 height=500>No canvas support</canvas>
+	<script type="text/javascript">startExample();</script>
+</body>
+</html>
