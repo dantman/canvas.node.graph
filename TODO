@@ -1,4 +1,3 @@
-- Finish porting proximity (remaining python code to port is located inline in proximity.js)
 - Port cluster
 - Write methods for the oval and functionality not builtin to canvas.
 - Port edges drawing (deferred till this library can render something, edge code uses path classes that don't exist in JS' Canvas)
