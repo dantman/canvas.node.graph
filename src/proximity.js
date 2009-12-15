@@ -54,12 +54,12 @@ Proximity.adjacency = function(o) {
 	o.stochastic = !!o.stochastic;
 	
 	var v = {};
-	if ( id in o.graph.nodes ) {
+	for ( var id in o.graph.nodes ) {
 		var n = o.graph.nodes[id];
 		v[n.id] = {};
 	}
 	
-	CanvasNode.utils.forEach.call(o.graph.edges, function(e) {
+	CanvasNode.util.forEach.call(o.graph.edges, function(e) {
 		var id1 = e[o.reversed?"node2":"node1"].id;
 		var id2 = e[o.reversed?"node1":"node2"].id;
 		
@@ -172,7 +172,7 @@ Proximity.brandesBetweennessCentrality = function(graph, normalized, directed) {
 				var w = iter.next().id;
 				var vw_dist = D[q.v] + W[q.v][w];
 				
-				if ( !(w IN d) && ( !(w in seen) || vw_dist < seen[w] ) ) {
+				if ( !(w in D) && ( !(w in seen) || vw_dist < seen[w] ) ) {
 					seen[w] = vw_dist;
 					Q.push({ dist: vw_dist, pred: q.v, v: w });
 					P[w] = [v];
@@ -205,7 +205,7 @@ Proximity.brandesBetweennessCentrality = function(graph, normalized, directed) {
 			m = 1;
 		}
 		
-		for ( var id in betweenness ) {
+		for ( var id in betweenness )
 			betweenness[id] = betweenness[id]/m;
 		
 		return betweenness;

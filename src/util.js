@@ -55,6 +55,23 @@ CanvasNode.util.filter =
 		return res;
 	};
 
+// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Objects/Array/indexOf
+CanvasNode.util.indexOf =
+	Array.prototype.indexOf ||
+	function(elt /*, from*/) {
+		var len = this.length >>> 0;
+		
+		var from = Number(arguments[1]) || 0;
+		from = (from < 0) ? Math.ceil(from) : Math.floor(from);
+		if (from < 0)
+			from += len;
+
+		for (; from < len; from++) {
+			if (from in this && this[from] === elt)
+				return from;
+		}
+		return -1;
+	};
 
 CanvasNode.util.remove = function(item) {
 	for ( var i = this.length-1; i >= 0; i-- )
@@ -79,7 +96,7 @@ CanvasNode.util.unique = function() {
 CanvasNode.util.shallowCopy = function(obj) {
 	var newObj = {};
 	for ( var k in obj )
-		if ( obj.hasObjectProperty(k) )
+		if ( obj.hasOwnProperty(k) )
 			newObj[k] = obj[k];
 	return newObj;
 };
@@ -89,7 +106,7 @@ CanvasNode.util.keys =
 	function(obj) {
 		var keys = [];
 		for ( var k in obj )
-			if ( obj.hasObjectProperty(k) )
+			if ( obj.hasOwnProperty(k) )
 				keys.push(k);
 		return keys;
 	};
@@ -99,7 +116,7 @@ CanvasNode.util.values =
 	function(obj) {
 		var values = [];
 		for ( var k in obj )
-			if ( obj.hasObjectProperty(k) )
+			if ( obj.hasOwnProperty(k) )
 				values.push(obj[k]);
 		return values;
 	};
@@ -109,18 +126,18 @@ CanvasNode.util.count = function(obj) {
 		return obj.__count__;
 	var count = 0;
 	for ( var k in obj )
-		if ( obj.hasObjectProperty(k) )
+		if ( obj.hasOwnProperty(k) )
 			count++;
 	return count;
 };
 
-CanvasNode.util.P = function() {};
 CanvasNode.util.create =
 	Object.create ||
 	function(proto) {
-	P.prototype = proto;
-	return new P;
-};
+		function P() {}
+		P.prototype = proto;
+		return new P();
+	};
 
 CanvasNode.util.sum = function(arr) {
 	var n = 0;
@@ -136,10 +153,10 @@ CanvasNode.util.Iterator = function(list) {
 };
 CanvasNode.util.Iterator.prototype.next = function() {
 	this.index++;
-	this.hasNext = this.index+1 < this.list.length;
-	this.current = this.list[this.index];
-	if ( this.index >= this.length )
+	this.hasNext = this.index+1 < this._list.length;
+	this.current = this._list[this.index];
+	if ( this.index >= this._list.length )
 		throw new Error("Called .next() on iterator when "); // @todo Use the proper error type
-	return this.list[this.index];
+	return this._list[this.index];
 };
 

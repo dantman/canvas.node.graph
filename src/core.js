@@ -23,7 +23,7 @@ function Node(graph, id, radius, style, category, label) {
 }
 Node.radius = 8;
 Node.prototype.isLeaf = function() {
-	return self.links.length == 1;
+	return this.links.length == 1;
 };
 /**
  * Returns True if given node can be reached over traversable edges.
@@ -36,7 +36,7 @@ Node.prototype.canReach = function(node, traversable, edge) {
 		edge = true;
 	if ( typeof node === "string" )
 		node = this.graph.nodes[node];
-	var nodes = self.graph.nodes;
+	var nodes = this.graph.nodes;
 	CanvasNode.util.forEach.call(nodes, function(n) {
 		n._visited = false;
 	});
@@ -110,10 +110,14 @@ function Links() {
 	this._edges = {};
 	this.length = 0;
 };
+Links.prototype._push = Array.prototype.push;
 Links.prototype.append = function(node, edge) {
 	if ( edge )
-		self._edges[node.id] = edge;
+		this._edges[node.id] = edge;
 	this._push(node);
+};
+Links.prototype.has = function(node) {
+	return CanvasNode.util.indexOf.call(this, node) >= 0;
 };
 Links.prototype.remove = function(node) {
 	delete this._edges[node.id];
@@ -122,7 +126,7 @@ Links.prototype.remove = function(node) {
 Links.prototype.edge = function(id) {
 	if ( id instanceof Node )
 		id = id.id;
-	return self._edges[id];
+	return this._edges[id];
 };
 Links.prototype.iterator = function() {
 	return new CanvasNode.util.Iterator(this);
@@ -140,7 +144,7 @@ function Edge(node1, node2, weight, length, label, properties) {
 	// The python does this using a (gs)etter, we need to find another method
 };
 
-function Graph(iterations, distance, layout) { // Todo, we don't know CTX at this point, the python version is screwy, reinvent ctx handling
+function Graph(iterations, distance, layout) {
 	this.iterations = iterations === undefined ? 1000 : iterations;
 	this.distance = distance === undefined ? 1 : distance;
 	
@@ -149,15 +153,17 @@ function Graph(iterations, distance, layout) { // Todo, we don't know CTX at thi
 	this.root = undefined;
 	
 	// Calculates positions for nodes.
-	this.layout = new Layout.types[layout||"spring"](this.iterations);
+	this.layout = new Layout.types[layout||"spring"](this, this.iterations);
+	if ( !this.layout && window.console )
+		console.warning("There is no layout type named "+(layout||"spring")+" available Graph has been constructed without one.");
 	this.d = Node.radius * 2.5 * this.distance;
 	
 	// Hover, click and drag event handler.
-	this.events = Event.events(this, /*todo*/ ctx); // @todo Make this more dom like
+	//this.events = Event.events(this, /*todo*/ ctx); // @todo Make this more dom like
 	
 	// Enhanced dictionary of all styles.
 	this.styles = new Styles(this);
-	this.styles.append(new Style("default", ctx));
+	this.styles.append(new Style("default"));
 	this.alpha = 0;
 };
 Graph.prototype.getDistance = function() {
@@ -174,12 +180,12 @@ Graph.prototype.copy = function(empty) {
 	var g = new Graph(this.layout.n, this.distance, this.layout.type);
 	g.layout = this.layout.copy(g);
 	g.styles = this.styles.copy(g);
-	g.events = this.events.copy(g);
+	//g.events = this.events.copy(g);
 	
 	if( !empty ) {
 		for ( var id in this.nodes ) {
 			var n = this.nodes[id];
-			g.addNode(n.id, n.radius, n.style, n.category, n.label, (n === this.root));
+			g.addNode(n.id, { radius: n.radius, style: n.style, category: n.category, label: n.label, root: (n === this.root) });
 		}
 		CanvasNode.util.forEach.call(this.edges, function(e) {
 			g.addEdge(e.node1.id, e.node2.id, e.weight, e.length, e.label);
@@ -224,16 +230,18 @@ Graph.prototype.newEdge = function() {
 /**
  * Add node from id and return the node object.
  */
-Graph.prototype.addNode = function(id, radius, style, category, label, root) {
+Graph.prototype.addNode = function(id, o) {
+	o = o || {};
+	
 	if ( id in this.nodes )
 		return this.nodes[id];
-	if ( typeof style !== "string" && style.name )
-		style = style.name;
+	if ( typeof o.style !== "string" && o.style && o.style.name )
+		o.style = o.style.name;
 	
-	var n = this.newNode(id, radius, style, category, label);
+	var n = this.newNode(this, id, o.radius, o.style, o.category, o.label);
 	this.nodes[n.id] = n;
 	
-	if ( root )
+	if ( o.root )
 		this.root = n;
 	
 	return n;
@@ -408,11 +416,15 @@ Graph.prototype.draw = function(o) {
 	
 	this.update();
 	
+	var ctx = this.canvas.getContext('2d');
+	
+	if ( typeof this.x !== "number" || typeof this.y !== "number" || isNaN(this.x) || isNaN(this.y) )
+		if ( window.console )
+			console.warn("Graph's x or y is not a number { %o, %o }", this.x, this.y);
+	
 	// Draw the graph background.
 	var s = this.styles.getStyle();
-	s.graphBackground(s);
-	
-	var ctx = this.canvas.getContext('2d');
+	s.graphBackground(ctx);
 	
 	// Center the graph on the canvas.
 	ctx.save();
@@ -427,7 +439,7 @@ Graph.prototype.draw = function(o) {
 			var n = nodes[i];
 			s = this.styles.getStyle(n.style);
 			if ( s.graphTraffic )
-				s.graphTraffic(s, n, this.alpha);
+				s.graphTraffic(ctx, n, this.alpha);
 		}
 		
 	}
@@ -435,28 +447,28 @@ Graph.prototype.draw = function(o) {
 	// Draw the edges and their labels.
 	s = this.styles.getStyle();
 	if ( s.edges )
-		s.edges(s, this.edges, this.alpha, o.weighted, o.directed);
+		s.edges(ctx, this.edges, this.alpha, o.weighted, o.directed);
 	// Draw each node in the graph.
 	// Apply individual style to each node (or default).
 	for ( var id in this.nodes ) {
 		var n = this.nodes[id];
 		s = this.styles.getStyle(n.style);
 		if ( s.node )
-			s.node(s, n, self.alpha);
+			s.node(ctx, n, this.alpha);
 	}
 	
 	// Highlight the given shortest path.
 	s = this.styles.getStyle("highlight");
 	
 	if ( s.path )
-		s.path(s, this, o.highlight);
+		s.path(ctx, this, o.highlight);
 	
 	// Draw node id's as labels on each node.
 	for ( var id in this.nodes ) {
 		var n = this.nodes[id];
 		s = this.styles.getStyle(n.style);
 		if ( s.nodeLabel )
-			s.nodeLabel(s, n, this.alpha);
+			s.nodeLabel(ctx, n, this.alpha);
 	}
 	
 	// Events for clicked and dragged nodes.
@@ -493,7 +505,7 @@ Graph.prototype.shortestPath = function(id1, id2, heuristic, directed) {
  * Node betweenness weights are updated in the process.
  */
 Graph.prototype.betweennessCentrality = function(normalized, directed) {
-	if ( normalized === unsigned )
+	if ( normalized === undefined )
 		normalized = true;
 	var bc = Proximity.brandesBetweennessCentrality(this, normalized, !!directed);
 	for ( var id in bc )
@@ -603,7 +615,7 @@ Graph.prototype.crown = function(depth) {
  * The number of edges in relation to the total number of possible edges.
  */
 Graph.prototype.getDensity = function() {
-	var nodes = CanvasNode.util.count(self.nodes);
+	var nodes = CanvasNode.util.count(this.nodes);
 	return 2 * this.edges.length / nodes * (nodes-1);
 };
 
@@ -629,7 +641,7 @@ Graph.prototype._or = function(graph) {
 	for ( var id in this.nodes ) {
 		var n = this.nodes[id];
 		var root = !g.root && graph.root === n;
-		g.addNode(n.id, n.radius, n.style, n.category, n.label, root);
+		g.addNode(n.id, { radius: n.radius, style: n.style, category: n.category, label: n.label, root: root });
 	}
 	CanvasNode.util.forEach.call(graph.edges, function(e) {
 		g.addEdge(e.node1.id, e.node2.id, e.weight, e.length, e.label);

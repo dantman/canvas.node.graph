@@ -13,7 +13,7 @@ Styles.prototype.create = function(stylename, o) {
 	o = o || {};
 	
 	if ( stylename === "default" ) {
-		this._styles[stylename] = new Style(stylename, this._ctx, o);
+		this._styles[stylename] = new Style(stylename, o);
 		return this._styles[stylename];
 	}
 	
@@ -101,17 +101,15 @@ Styleguide.prototype.copy = function(graph) {
  * The default style is used for edges.
  * When text is set to None, no id label is displayed.
  */
-function Style(name, _ctx, o) {
+function Style(name, o) {
 	this.name = name;
-	this._ctx = _ctx;
-	if ( !_ctx )
-		return this;
 	
 	// Copy all the default colors and typography, as well as methods
 	// Defaults for colors and typography.
-	// The actual drawing methods are just a bunch of monkey patches,
-	// so another function can easily be assigned.
-	// Call style.drawMethod(style, params) instead of style.drawMethod(params). @todo fixdoc
+	// All code is independent of any one canvas context so when drawing you must
+	// pass a ctx object to each method. We take advantage of JavaScript's
+	// loose objects here, unlike the python version you don't need to call
+	// style.method(style, ); because `this` is available to us
 	for ( var k in Style.defaults )
 		this[k] = Style.defaults[k];
 	
@@ -148,9 +146,9 @@ Style.rgb = Style.rgba = function(r, g, b, a) {
 		depth:       true,
 		
 		// drawing methods
-		graphBackground: function() {
+		graphBackground: function(ctx) {
 			// Graph background color
-			this._ctx.fillStyle = this.background;
+			ctx.fillStyle = Style._color(this.background);
 			if ( this.depth ) {
 				// @todo Port this gradient code
 				// clr = colors.color(s.background).darker(0.2)
@@ -159,7 +157,7 @@ Style.rgb = Style.rgba = function(r, g, b, a) {
 				// colors.shadow(dx=0, dy=0, blur=2, alpha=0.935, clr=s.background)
 			}
 		},
-		graphTraffic: function(node, alpha) {
+		graphTraffic: function(ctx, node, alpha) {
 			// Visualization of traffic-intensive nodes (based on their centrality).
 			if ( alpha === undefined )
 				alpha = 1;
@@ -167,11 +165,11 @@ Style.rgb = Style.rgba = function(r, g, b, a) {
 			var r = Node.radius;
 			r += (node.weight+.5) * r * 5;
 			if ( this.traffic ) {
-				this._ctx.fillStyle = Style._color(this.traffic, {alpha:this.traffic.alpha*alpha});
-				this._ctx.fillOval(node.getX()-r, node.getY()-r, r*2, r*2); // @todo Port oval
+				ctx.fillStyle = Style._color(this.traffic, {alpha:this.traffic.alpha*alpha});
+				ctx.fillOval(node.getX()-r, node.getY()-r, r*2, r*2); // @todo Port oval
 			}
 		},
-		node: function(node, alpha) {
+		node: function(ctx, node, alpha) {
 			// Visualization of a default node.
 			if ( alpha === undefined )
 				alpha = 1;
@@ -184,16 +182,16 @@ Style.rgb = Style.rgba = function(r, g, b, a) {
 			var r = node.r;
 			
 			if ( this.fill ) {
-				this._ctx.fillStyle = Style._color(this.fill, {alpha:this.fill.alpha*alpha});
+				ctx.fillStyle = Style._color(this.fill, {alpha:this.fill.alpha*alpha});
 				this.fillOval(node.getX()-r, node.getY()-r, r*2, r*2);
 			}
 			if ( this.stroke ) {
-				this._ctx.lineWidth = this.strokeWidth;
-				this._ctx.strokeStyle = Style._color(this.stroke, {alpha:this.stroke.alpha*alpha*3});
+				ctx.lineWidth = this.strokeWidth;
+				ctx.strokeStyle = Style._color(this.stroke, {alpha:this.stroke.alpha*alpha*3});
 				this.strokeOval(node.getX()-r, node.getY()-r, r*2, r*2);
 			}
 		},
-		nodeLabel: function(node, alpha) {
+		nodeLabel: function(ctx, node, alpha) {
 			// Visualization of a node's id.
 			if ( alpha === undefined )
 				alpha = 1;
@@ -202,13 +200,13 @@ Style.rgb = Style.rgba = function(r, g, b, a) {
 				// @note JS Canvas does not have lineHeight because it does not wrap
 				// @todo We need to implement text wrapping ourself.
 				// @todo Port shadows
-				this._ctx.font = this.fontSize + "px " + this.font;
-				this._ctx.fillStyle = Style._color(this.text, {alpha:this.text.alpha*alpha});
+				ctx.font = this.fontSize + "px " + this.font;
+				ctx.fillStyle = Style._color(this.text, {alpha:this.text.alpha*alpha});
 				// @todo Center alignment?
-				this._ctx.fillText(node.label, node.getX(), node.getY());
+				ctx.fillText(node.label, node.getX(), node.getY());
 			}
 		},
-		edges: function(edges, alpha, weighted, directed) {
+		edges: function(ctx, edges, alpha, weighted, directed) {
 			// Visualization of the edges in a network.
 			if ( alpha === undefined )
 				alpha = 1;
@@ -217,21 +215,21 @@ Style.rgb = Style.rgba = function(r, g, b, a) {
 			
 			// @todo Port this method
 		},
-		edge: function(path, edge, alpha) {
+		edge: function(ctx, path, edge, alpha) {
 			// Visualization of a single edge between two nodes.
 			if ( alpha === undefined )
 				alpha = 1;
 			
 		},
-		edgeArrow: function() {},
-		edgeLabel: function() {},
-		path: function() {},
+		edgeArrow: function(ctx) {},
+		edgeLabel: function(ctx) {},
+		path: function(ctx) {},
 	};
 })();
 
 Style.prototype.copy = function(name) {
 	// Copy all attributes, link all monkey patch methods.
-	var s = new Style(name || this.name, this._ctx);
+	var s = new Style(name || this.name);
 	for ( var k in Style.defaults )
 		s[k] = this[k];
 	return s;
