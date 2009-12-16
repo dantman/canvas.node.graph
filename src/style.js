@@ -188,7 +188,7 @@ Style.rgb = Style.rgba = function(r, g, b, a) {
 				ctx.fillStyle = Style._color(this.fill, {alpha:this.fill.alpha*alpha});
 				ctx.beginPath();
 				//this.fillOval(node.getX()-r, node.getY()-r, r*2, r*2);
-				ctx.arc(node.getX()-r, node.getY()-r, r, 0, 360, false);
+				ctx.arc(node.getX(), node.getY(), r, 0, 360, false);
 				ctx.closePath();
 				ctx.fill();
 			}
@@ -197,8 +197,8 @@ Style.rgb = Style.rgba = function(r, g, b, a) {
 				ctx.strokeStyle = Style._color(this.stroke, {alpha:this.stroke.alpha*alpha*3});
 				ctx.beginPath();
 				//this.strokeOval(node.getX()-r, node.getY()-r, r*2, r*2);
-				ctx.moveTo(node.getX()-r*2, node.getY()-r);
-				ctx.arc(node.getX()-r, node.getY()-r, r, 180, -180, false);
+				ctx.moveTo(node.getX()-r, node.getY());
+				ctx.arc(node.getX(), node.getY(), r, 180, -180, false);
 				ctx.closePath();
 				ctx.stroke();
 			}

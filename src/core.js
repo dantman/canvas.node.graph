@@ -449,16 +449,24 @@ Graph.prototype.draw = function(o) {
 	// Draw the edges and their labels.
 	CanvasNode.util.forEach.call(this.edges, function(e) {
 		s = this.styles.getStyle(e.node1.style);
-		
 		if ( o.weighted )
 			s.edge(ctx, e, this.alpha, true);
-		
+	}, this);
+	
+	CanvasNode.util.forEach.call(this.edges, function(e) {
+		s = this.styles.getStyle(e.node1.style);
 		if ( s.edge )
 			s.edge(ctx, e, this.alpha, false);
-		
+	}, this);
+	
+	CanvasNode.util.forEach.call(this.edges, function(e) {
+		s = this.styles.getStyle(e.node1.style);
 		if ( o.directed )
 			s.edgeArrow(ctx, e, 10);
-		
+	}, this);
+	
+	CanvasNode.util.forEach.call(this.edges, function(e) {
+		s = this.styles.getStyle(e.node1.style);
 		if ( s.edgeLabel )
 			s.edgeLabel(ctx, e, this.alpha);
 	}, this);
