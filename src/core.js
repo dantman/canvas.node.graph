@@ -447,15 +447,21 @@ Graph.prototype.draw = function(o) {
 	}
 	
 	// Draw the edges and their labels.
-	s = this.styles.getStyle();
-	if ( s.edges ) {
-		s.edges(ctx, this.edges, this.alpha, o.weighted, o.directed);
-		if ( s.edgeLabel ) {
-			CanvasNode.util.forEach.call(this.edges, function(e) {
-				s.edgeLabel(ctx, e, this.alpha);
-			}, this);
-		}
-	}
+	CanvasNode.util.forEach.call(this.edges, function(e) {
+		s = this.styles.getStyle(e.node1.style);
+		
+		if ( o.weighted )
+			s.edge(ctx, e, this.alpha, true);
+		
+		if ( s.edge )
+			s.edge(ctx, e, this.alpha, false);
+		
+		if ( o.directed )
+			s.edgeArrow(ctx, e, 10);
+		
+		if ( s.edgeLabel )
+			s.edgeLabel(ctx, e, this.alpha);
+	}, this);
 	
 	// Draw each node in the graph.
 	// Apply individual style to each node (or default).
@@ -689,9 +695,10 @@ Graph.prototype.split = function() {
 /**
  * Returns a new graph with predefined styling.
  */
-function CanvasGraph(iterations, distance, layout, depth) {
-	depth = depth === undefined ? true : !!depth;
-	var g = new Graph(iterations, distance, layout);
+function CanvasGraph(o) {
+	o = o || {};
+	o.depth = o.depth === undefined ? true : !!o.depth;
+	var g = new Graph(o.iterations, o.distance, o.layout);
 	
 	// Styles for different types of nodes.
 	var s = Style.style;

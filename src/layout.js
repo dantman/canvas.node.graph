@@ -110,7 +110,7 @@ Layout.types.circle.prototype = CanvasNode.util.create(Layout.prototype);
 			// Calculate circle circumference. 
 			// Node diameter / circumference determine how many nodes fit on the shell.
 			var C = this.radius * this.graph.d * 2*Math.PI * i/circles.length;
-			var s = nodeRadis*2 / C * 2;
+			var s = nodeRadius*2 / C * 2;
 			
 			var a = this.angle;
 			var t = Math.min(2*Math.PI*s, 2*Math.PI/circle.length);

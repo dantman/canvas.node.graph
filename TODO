@@ -7,3 +7,4 @@
   - Setup head and footer code that enclose code in an isolated block and setup a Makefile to cat the js files together
   - Reduce code neecessary for using util methods and assume they will be located inside an isolated function block
   - Rename CanvasNode and other things to have proper names
+  - Convert use of Node.radius to something like node.constructor.radius where relevant

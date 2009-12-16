@@ -218,21 +218,30 @@ Style.rgb = Style.rgba = function(r, g, b, a) {
 				ctx.fillText(node.label, node.getX(), node.getY());
 			}
 		},
-		edges: function(ctx, edges, alpha, weighted, directed) {
-			// Visualization of the edges in a network.
-			if ( alpha === undefined )
-				alpha = 1;
-			weighted = !!weighted;
-			directed = !!directed;
-			
-			// @todo Port this method
-		},
-		edge: function(ctx, path, edge, alpha) {
+		edge: function(ctx, edge, alpha, weight) {
 			// Visualization of a single edge between two nodes.
 			if ( alpha === undefined )
 				alpha = 1;
 			
+			if ( (weight && !this.fill) || (!weight && !this.stroke) )
+				return;
 			
+			if ( weight ) {
+				ctx.lineWidth = Node.radius*edge.weight;
+				ctx.strokeStyle = Style._color(this.fill, {alpha:this.fill.alpha*0.65*alpha});
+			} else {
+				ctx.lineWidth = this.strokeWidth;
+				ctx.strokeStyle = Style._color(this.stroke, {alpha:this.stroke.alpha*0.65*alpha});
+			}
+			
+			ctx.beginPath();
+			ctx.moveTo(edge.node1.getX(), edge.node1.getY());
+			if ( edge.node2.style === "back" ) {
+				throw "Not implemented yet.";
+			} else {
+				ctx.lineTo(edge.node2.getX(), edge.node2.getY());
+			}
+			ctx.stroke();
 			
 		},
 		edgeArrow: function(ctx) {},
