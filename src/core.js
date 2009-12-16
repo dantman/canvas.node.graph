@@ -188,7 +188,7 @@ Graph.prototype.copy = function(empty) {
 			g.addNode(n.id, { radius: n.radius, style: n.style, category: n.category, label: n.label, root: (n === this.root) });
 		}
 		CanvasNode.util.forEach.call(this.edges, function(e) {
-			g.addEdge(e.node1.id, e.node2.id, e.weight, e.length, e.label);
+			g.addEdge(e.node1.id, e.node2.id, { weight: e.weight, length: e.length, label: e.label });
 		});
 	}
 	
@@ -258,7 +258,9 @@ Graph.prototype.addNodes = function(nodes) {
  * Add weighted (0.0-1.0) edge between nodes, creating them if necessary.
  * The weight represents the importance of the connection (not the cost).
  */
-Graph.prototype.addEdge = function(id1, id2, weight, length, label) {
+Graph.prototype.addEdge = function(id1, id2, o) {
+	o = o || {};
+	
 	if ( id1 === id2 )
 		return null;
 	
@@ -274,9 +276,9 @@ Graph.prototype.addEdge = function(id1, id2, weight, length, label) {
 		if ( n2.links.edge(n1).node1 === n1 )
 			return this.edge(id1, id2);
 	
-	weight = Math.max(0, Math.min(weight, 1));
+	o.weight = Math.max(0, Math.min(o.weight, 1));
 	
-	var e = this.newEdge(n1, n2, weight, length, label);
+	var e = this.newEdge(n1, n2, o.weight, o.length, o.label);
 	this.edges.push(e);
 	n1.links.append(n2, e);
 	n2.links.append(n1, e);
@@ -446,8 +448,15 @@ Graph.prototype.draw = function(o) {
 	
 	// Draw the edges and their labels.
 	s = this.styles.getStyle();
-	if ( s.edges )
+	if ( s.edges ) {
 		s.edges(ctx, this.edges, this.alpha, o.weighted, o.directed);
+		if ( s.edgeLabel ) {
+			CanvasNode.util.forEach.call(this.edges, function(e) {
+				s.edgeLabel(ctx, e, this.alpha);
+			}, this);
+		}
+	}
+	
 	// Draw each node in the graph.
 	// Apply individual style to each node (or default).
 	for ( var id in this.nodes ) {
@@ -644,7 +653,7 @@ Graph.prototype._or = function(graph) {
 		g.addNode(n.id, { radius: n.radius, style: n.style, category: n.category, label: n.label, root: root });
 	}
 	CanvasNode.util.forEach.call(graph.edges, function(e) {
-		g.addEdge(e.node1.id, e.node2.id, e.weight, e.length, e.label);
+		g.addEdge(e.node1.id, e.node2.id, { weight: e.weight, length: e.length, label: e.label });
 	});
 	return g;
 };

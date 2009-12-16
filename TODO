@@ -1,5 +1,3 @@
-- Port cluster
-- Write methods for the oval and functionality not builtin to canvas.
 - Port edges drawing (deferred till this library can render something, edge code uses path classes that don't exist in JS' Canvas)
 - Port gradient and shadow code
 - Write event handling code. (We don't want a direct port of event.py, we'll implement events using a event system that looks like the event system already present in the dom)

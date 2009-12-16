@@ -117,14 +117,13 @@ function Style(name, o) {
 	
 }
 Style._color = function(c, o) {
+	if ( typeof c === "string" )
+		return c;
 	for ( var k in o )
 		c[k] = o[k];
-	var r = Math.round(c.red   * 255);
-	var g = Math.round(c.green * 255);
-	var b = Math.round(c.blue  * 255);
 	return c.alpha === undefined ?
-		"rgba("+r+", "+g+", "+b+")" :
-		"rgba("+r+", "+g+", "+b+", "+c.alpha+")";
+		"rgb("+[c.red, c.green, c.blue].join(', ')+")" :
+		"rgba("+[c.red, c.green, c.blue, c.alpha].join(', ')+")";
 }
 Style.rgb = Style.rgba = function(r, g, b, a) {
 	return { red:r, green:g, blue:b, alpha:a };
@@ -140,7 +139,7 @@ Style.rgb = Style.rgba = function(r, g, b, a) {
 		strokeWidth: 0.5,
 		text:        color(1.00, 1.00, 1.00, 0.85),
 		font:        "Verdana",
-		fontSize:    10,
+		fontSize:    12,//10
 		textWidth:   100,
 		align:       1,
 		depth:       true,
@@ -166,7 +165,11 @@ Style.rgb = Style.rgba = function(r, g, b, a) {
 			r += (node.weight+.5) * r * 5;
 			if ( this.traffic ) {
 				ctx.fillStyle = Style._color(this.traffic, {alpha:this.traffic.alpha*alpha});
-				ctx.fillOval(node.getX()-r, node.getY()-r, r*2, r*2); // @todo Port oval
+				ctx.beginPath();
+				ctx.arc(node.getX()-r, node.getY()-r, r, 0, 360, false);
+				//ctx.fillOval(node.getX()-r, node.getY()-r, r*2, r*2); // @todo Port oval
+				ctx.closePath();
+				ctx.fill();
 			}
 		},
 		node: function(ctx, node, alpha) {
@@ -179,16 +182,25 @@ Style.rgb = Style.rgba = function(r, g, b, a) {
 				// colors.shadow(dx=5, dy=5, blur=10, alpha=0.5*alpha)
 			}
 			
-			var r = node.r;
+			var r = node.radius;
 			
 			if ( this.fill ) {
 				ctx.fillStyle = Style._color(this.fill, {alpha:this.fill.alpha*alpha});
-				this.fillOval(node.getX()-r, node.getY()-r, r*2, r*2);
+				ctx.beginPath();
+				//this.fillOval(node.getX()-r, node.getY()-r, r*2, r*2);
+				ctx.arc(node.getX()-r, node.getY()-r, r, 0, 360, false);
+				ctx.closePath();
+				ctx.fill();
 			}
 			if ( this.stroke ) {
 				ctx.lineWidth = this.strokeWidth;
 				ctx.strokeStyle = Style._color(this.stroke, {alpha:this.stroke.alpha*alpha*3});
-				this.strokeOval(node.getX()-r, node.getY()-r, r*2, r*2);
+				ctx.beginPath();
+				//this.strokeOval(node.getX()-r, node.getY()-r, r*2, r*2);
+				ctx.moveTo(node.getX()-r*2, node.getY()-r);
+				ctx.arc(node.getX()-r, node.getY()-r, r, 180, -180, false);
+				ctx.closePath();
+				ctx.stroke();
 			}
 		},
 		nodeLabel: function(ctx, node, alpha) {
@@ -220,9 +232,45 @@ Style.rgb = Style.rgba = function(r, g, b, a) {
 			if ( alpha === undefined )
 				alpha = 1;
 			
+			
+			
 		},
 		edgeArrow: function(ctx) {},
-		edgeLabel: function(ctx) {},
+		edgeLabel: function(ctx, edge, alpha) {
+			// Visualization of the label accompanying an edge.
+			if ( alpha === undefined )
+				alpha = 1;
+			
+			if ( this.text && edge.label ) {
+				ctx.font = this.fontSize*0.75 + "px " + this.font;
+				ctx.fillStyle = Style._color(this.text, {alpha:this.text.alpha*alpha});
+				
+				var textwidth = ctx.measureText(edge.label).width;
+				
+				// Position the label centrally along the edge line.
+				var a = Math.atan2(edge.node2.getY()-edge.node1.getY(), edge.node2.getX()-edge.node1.getX()) / (Math.PI/180);
+				var d = Math.sqrt(Math.pow(edge.node2.getX()-edge.node1.getX(), 2) + Math.pow(edge.node2.getY()-edge.node1.getY(), 2));
+				var d = Math.abs(d-textwidth) * 0.5;
+				
+				ctx.save();
+				// @todo What was s._ctx.transform("corner") supposed to do in the python version?
+				ctx.translate(edge.node1.getX(), edge.node1.getY());
+				ctx.rotate(-a);
+				ctx.translate(d, this.fontSize);
+				ctx.scale(alpha, alpha);
+				
+				// Flip labels on the left hand side so they are legible.
+				if ( 90 < (a%360) && (a%360) < 270 ) {
+					ctx.translate(textwidth, -this.fontSize*2);
+					// s._ctx.transform(CENTER)
+					ctx.rotate(180);
+					// s._ctx.transform(CORNER)
+				}
+				
+				ctx.fillText(edge.label, 0, 0);
+				ctx.restore();
+			}
+		},
 		path: function(ctx) {},
 	};
 })();

@@ -30,7 +30,6 @@ Layout.prototype.bounds = function() {
 	var max = { x: -Infinity, y: -Infinity };
 	for ( var id in this.graph.nodes ) {
 		var n = this.graph.nodes[id];
-		console.log(n.vx, n.vy, n);
 		if ( n.vx < min.x ) min.x = n.vx;
 		if ( n.vy < min.y ) min.y = n.vy;
 		if ( n.vx > max.x ) max.x = n.vx;
